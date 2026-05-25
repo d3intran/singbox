@@ -1,0 +1,389 @@
+{
+  "log": {
+    "level": "info",
+    "timestamp": true
+  },
+  "dns": {
+    "servers": [
+      {
+        "tag": "google",
+        "type": "tls",
+        "server": "8.8.8.8",
+        "detour": "proxy"
+      },
+      {
+        "tag": "local",
+        "type": "udp",
+        "server": "223.5.5.5"
+      },
+      {
+        "tag": "fakeip",
+        "type": "fakeip",
+        "inet4_range": "198.18.0.0/15"
+      }
+    ],
+    "rules": [
+      {
+        "rule_set": "geosite-ads",
+        "server": "local",
+        "disable_cache": true
+      },
+      {
+        "rule_set": "geosite-cn",
+        "server": "local"
+      },
+      {
+        "query_type": [
+          "A"
+        ],
+        "server": "fakeip"
+      }
+    ],
+    "strategy": "ipv4_only",
+    "independent_cache": true
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "address": [
+        "172.19.0.1/30"
+      ],
+      "auto_route": true,
+      "strict_route": true,
+      "stack": "mixed"
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "selector",
+      "tag": "proxy",
+      "outbounds": [
+        "auto",
+        "Hy1-1 | 法国",
+        "Hy1-2 | 法国",
+        "TU-1 | 德国",
+        "Hy1-3 | 德国",
+        "Hy1-4 | 德国",
+        "Hy2-1 | 法国",
+        "Hy2-2 | 法国",
+        "TU-2 | 法国",
+        "TU-3 | 荷兰",
+        "NV-1 | 台湾",
+        "NV-2 | 美国"
+      ],
+      "default": "auto"
+    },
+    {
+      "type": "urltest",
+      "tag": "auto",
+      "outbounds": [
+        "Hy1-1 | 法国",
+        "Hy1-2 | 法国",
+        "TU-1 | 德国",
+        "Hy1-3 | 德国",
+        "Hy1-4 | 德国",
+        "Hy2-1 | 法国",
+        "Hy2-2 | 法国",
+        "TU-2 | 法国",
+        "TU-3 | 荷兰",
+        "NV-1 | 台湾",
+        "NV-2 | 美国"
+      ],
+      "url": "https://www.gstatic.com/generate_204",
+      "interval": "5m",
+      "tolerance": 50
+    },
+    {
+      "type": "hysteria",
+      "server": "62.210.29.98",
+      "server_port": 10066,
+      "auth_str": "github.com/Alvin9999-newpac/fanqiang",
+      "up_mbps": 50,
+      "down_mbps": 200,
+      "tls": {
+        "enabled": true,
+        "server_name": "bing.com",
+        "insecure": true,
+        "alpn": [
+          "h3"
+        ]
+      },
+      "tag": "Hy1-1 | 法国"
+    },
+    {
+      "type": "hysteria",
+      "server": "163.172.117.163",
+      "server_port": 36699,
+      "auth_str": "dongtaiwang.com",
+      "up_mbps": 50,
+      "down_mbps": 200,
+      "tls": {
+        "enabled": true,
+        "server_name": "bing.com",
+        "insecure": true,
+        "alpn": [
+          "h3"
+        ]
+      },
+      "tag": "Hy1-2 | 法国"
+    },
+    {
+      "type": "tuic",
+      "server": "5.178.101.117",
+      "server_port": 30006,
+      "uuid": "36106e0f-4d9a-470b-a3fd-535f3b7a1e92",
+      "password": "dongtaiwang.com",
+      "congestion_control": "bbr",
+      "tls": {
+        "enabled": true,
+        "server_name": "www.microsoft.com",
+        "insecure": true,
+        "alpn": [
+          "h3"
+        ]
+      },
+      "tag": "TU-1 | 德国"
+    },
+    {
+      "type": "hysteria",
+      "server": "5.83.129.153",
+      "server_port": 20088,
+      "up_mbps": 50,
+      "down_mbps": 200,
+      "auth_str": "dongtaiwang.com",
+      "tls": {
+        "enabled": true,
+        "server_name": "apple.com",
+        "insecure": true,
+        "alpn": [
+          "h3"
+        ]
+      },
+      "tag": "Hy1-3 | 德国"
+    },
+    {
+      "type": "hysteria",
+      "server": "5.83.129.90",
+      "server_port": 54177,
+      "up_mbps": 50,
+      "down_mbps": 200,
+      "auth_str": "dongtaiwang.com",
+      "tls": {
+        "enabled": true,
+        "server_name": "apple.com",
+        "insecure": true,
+        "alpn": [
+          "h3"
+        ]
+      },
+      "tag": "Hy1-4 | 德国"
+    },
+    {
+      "type": "hysteria2",
+      "server": "62.210.10.108",
+      "server_port": 22000,
+      "up_mbps": 50,
+      "down_mbps": 200,
+      "password": "dongtaiwang.com",
+      "tls": {
+        "enabled": true,
+        "server_name": "www.microsoft.com",
+        "insecure": true
+      },
+      "tag": "Hy2-1 | 法国"
+    },
+    {
+      "type": "hysteria2",
+      "server": "163.172.126.108",
+      "server_port": 41227,
+      "up_mbps": 50,
+      "down_mbps": 200,
+      "password": "github.com/Alvin9999-newpac/fanqiang",
+      "tls": {
+        "enabled": true,
+        "server_name": "www.microsoft.com",
+        "insecure": true
+      },
+      "tag": "Hy2-2 | 法国"
+    },
+    {
+      "type": "tuic",
+      "server": "163.172.118.224",
+      "server_port": 33888,
+      "uuid": "9adb384a-0f16-4501-a8f3-b6b2556fce87",
+      "password": "dongtaiwang.com",
+      "congestion_control": "bbr",
+      "tls": {
+        "enabled": true,
+        "server_name": "bing.com",
+        "alpn": [
+          "h3"
+        ],
+        "insecure": true
+      },
+      "tag": "TU-2 | 法国"
+    },
+    {
+      "type": "tuic",
+      "server": "89.144.35.232",
+      "server_port": 17306,
+      "uuid": "3ebac90b-6977-47c0-bef5-b2e37554432c",
+      "password": "3ebac90b-6977-47c0-bef5-b2e37554432c",
+      "congestion_control": "bbr",
+      "tls": {
+        "enabled": true,
+        "server_name": "www.microsoft.com",
+        "alpn": [
+          "h3"
+        ],
+        "insecure": true
+      },
+      "tag": "TU-3 | 荷兰"
+    },
+    {
+      "type": "naive",
+      "server": "fan.193919.xyz",
+      "server_port": 44000,
+      "username": "dongtaiwang.com",
+      "password": "dongtaiwang.com",
+      "tls": {
+        "enabled": true,
+        "server_name": "fan.193919.xyz"
+      },
+      "tag": "NV-1 | 台湾"
+    },
+    {
+      "type": "naive",
+      "server": "hk.336892.xyz",
+      "server_port": 33550,
+      "username": "dongtaiwang.com",
+      "password": "dongtaiwang.com",
+      "tls": {
+        "enabled": true,
+        "server_name": "hk.336892.xyz"
+      },
+      "tag": "NV-2 | 美国"
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "action": "sniff"
+      },
+      {
+        "type": "logical",
+        "mode": "or",
+        "rules": [
+          {
+            "protocol": "dns"
+          },
+          {
+            "port": 53
+          }
+        ],
+        "action": "hijack-dns"
+      },
+      {
+        "ip_is_private": true,
+        "outbound": "direct"
+      },
+      {
+        "type": "logical",
+        "mode": "or",
+        "rules": [
+          {
+            "port": 853
+          },
+          {
+            "network": "udp",
+            "port": 443
+          },
+          {
+            "protocol": "stun"
+          }
+        ],
+        "action": "reject"
+      },
+      {
+        "rule_set": "geosite-ads",
+        "action": "reject"
+      },
+      {
+        "rule_set": "geoip-telegram",
+        "outbound": "proxy"
+      },
+      {
+        "rule_set": "geosite-!cn",
+        "outbound": "proxy"
+      },
+      {
+        "rule_set": "geosite-cn",
+        "outbound": "direct"
+      },
+      {
+        "rule_set": "geoip-cn",
+        "outbound": "direct"
+      },
+      {
+        "action": "resolve",
+        "server": "google",
+        "strategy": "prefer_ipv4"
+      }
+    ],
+    "rule_set": [
+      {
+        "type": "remote",
+        "tag": "geoip-cn",
+        "format": "binary",
+        "url": "https://testingcf.jsdelivr.net/gh/SagerNet/sing-geoip@rule-set/geoip-cn.srs",
+        "download_detour": "direct"
+      },
+      {
+        "type": "remote",
+        "tag": "geoip-telegram",
+        "format": "binary",
+        "url": "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/telegram.srs",
+        "download_detour": "direct"
+      },
+      {
+        "type": "remote",
+        "tag": "geosite-cn",
+        "format": "binary",
+        "url": "https://testingcf.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set/geosite-geolocation-cn.srs",
+        "download_detour": "direct"
+      },
+      {
+        "type": "remote",
+        "tag": "geosite-!cn",
+        "format": "binary",
+        "url": "https://testingcf.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set/geosite-geolocation-!cn.srs",
+        "download_detour": "direct"
+      },
+      {
+        "type": "remote",
+        "tag": "geosite-ads",
+        "format": "binary",
+        "url": "https://testingcf.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set/geosite-category-ads-all.srs",
+        "download_detour": "direct"
+      }
+    ],
+    "default_domain_resolver": "local",
+    "auto_detect_interface": true,
+    "final": "proxy"
+  },
+  "experimental": {
+    "cache_file": {
+      "enabled": true,
+      "store_rdrc": true
+    },
+    "clash_api": {
+      "external_controller": "127.0.0.1:9090",
+      "default_mode": "Enhanced"
+    }
+  }
+}

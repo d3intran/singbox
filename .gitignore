@@ -1,0 +1,24 @@
+# User distribution directory
+sing-box-1.13.12-windows-amd64/
+
+# Visual Studio / MSBuild build output
+bin/
+obj/
+publish/
+
+# User cache database and generated logs
+cache.db
+*.log
+
+# Visual Studio user specific files & cache
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
