@@ -78,9 +78,13 @@ public partial class SettingsPage : Page
         }
     }
 
-    private void AppendLog(string msg)
+    private void AppendLog(System.Collections.Generic.List<string> msgs)
     {
-        TxtLog.AppendText(msg + "\n");
+        if (msgs == null || msgs.Count == 0) return;
+
+        // Batch join and perform exactly 1 append operation to minimize UI thread draw cycles
+        var combinedText = string.Join("\n", msgs) + "\n";
+        TxtLog.AppendText(combinedText);
 
         // Cap TextBox text length to prevent unbounded growth.
         // When the limit is exceeded, trim the oldest portion.

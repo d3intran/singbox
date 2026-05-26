@@ -25,6 +25,11 @@ public class SingBoxService
     private volatile Process? singBoxProcess;
     private readonly object _processLock = new();
 
+    // High-performance log batching dispatch fields
+    private readonly List<string> _pendingLogs = new();
+    private bool _isLogDispatchPending = false;
+    private readonly object _logLock = new();
+
     private readonly HttpClient httpClient;
     private readonly HttpClient latencyClient; // dedicated client for latency tests
     private readonly SemaphoreSlim _latencySemaphore = new(8); // limit concurrent latency tests
@@ -40,7 +45,7 @@ public class SingBoxService
     public Queue<string> LogBuffer { get; } = new(); // Queue for O(1) Enqueue/Dequeue
 
     public event Action? StatusChanged;
-    public event Action<string>? LogReceived;
+    public event Action<List<string>>? LogReceived;
     public DateTime? LastSyncTime { get; private set; }
 
     private SingBoxService()
@@ -111,7 +116,24 @@ public class SingBoxService
             LogBuffer.Enqueue(message);
             if (LogBuffer.Count > 300) LogBuffer.Dequeue(); // O(1) FIFO
         }
-        SafeBeginInvoke(() => LogReceived?.Invoke(message));
+
+        lock (_logLock)
+        {
+            _pendingLogs.Add(message);
+            if (_isLogDispatchPending) return;
+            _isLogDispatchPending = true;
+        }
+
+        SafeBeginInvoke(() => {
+            List<string> logsToDispatch;
+            lock (_logLock)
+            {
+                logsToDispatch = new List<string>(_pendingLogs);
+                _pendingLogs.Clear();
+                _isLogDispatchPending = false;
+            }
+            LogReceived?.Invoke(logsToDispatch);
+        });
     }
 
     private static string ResolveSingboxExe(string baseDir)
