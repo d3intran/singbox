@@ -4,7 +4,7 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:local="clr-namespace:SingBoxTrayApp"
         xmlns:views="clr-namespace:SingBoxTrayApp.Views"
-        Title="sinbox" Height="680" Width="430"
+        Title="singbox" Height="680" Width="430"
         Icon="pack://application:,,,/icon.png"
         WindowBackdropType="Mica"
         WindowCornerPreference="Round"
@@ -20,7 +20,7 @@
 
     <DockPanel>
         <!-- Modern custom title bar with seamless integration and top-left icon (CanMaximize=False hides Maximize button) -->
-        <ui:TitleBar x:Name="AppTitleBar" DockPanel.Dock="Top" Title="sinbox" Height="32" Padding="8,0" FontSize="12" CanMaximize="False">
+        <ui:TitleBar x:Name="AppTitleBar" DockPanel.Dock="Top" Title="singbox" Height="32" Padding="8,0" FontSize="18" CanMaximize="False">
             <ui:TitleBar.Icon>
                 <ui:ImageIcon Source="pack://application:,,,/icon.png" Width="16" Height="16" VerticalAlignment="Center" Margin="6,0,4,0" />
             </ui:TitleBar.Icon>

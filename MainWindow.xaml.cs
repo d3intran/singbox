@@ -82,7 +82,7 @@ public partial class MainWindow : FluentWindow
         {
             _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
         }
-        _notifyIcon.Text = "sinbox";
+        _notifyIcon.Text = "singbox";
         _notifyIcon.Visible = true;
         _notifyIcon.DoubleClick += (s, e) => ShowWindow();
 

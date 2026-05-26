@@ -1,4 +1,4 @@
-# sinbox - WPF Desktop Client Frontend
+# singbox - WPF Desktop Client Frontend
 
 A modern, high-performance Windows desktop client frontend built on **.NET 8.0** and the **WPF** framework, utilizing **WPF-UI** for premium Fluent Design aesthetics.
 
@@ -20,7 +20,7 @@ graph TD
 ```
 
 ### 1. Presentation Layer (WPF & WPF-UI)
-* **Custom TitleBar**: Integrated native Win32 non-client area drag-and-drop support with custom vector brand styling (`sinbox`) and standard clickable controls.
+* **Custom TitleBar**: Integrated native Win32 non-client area drag-and-drop support with custom vector brand styling (`singbox`) and standard clickable controls.
 * **Layout Sizing & Unclipped Branding**: A modern compact left NavigationView sidebar (`CompactPaneLength="83"`) housing type-safe, unclipped `16x16` logo icons (`ui:ImageIcon`) centered perfectly to prevent DWM fractional boundary clipping.
 * **Text Formatting & Sharp Rendering**: Paper-sharp, pixel-perfect text rendering optimized for modern high-DPI Windows systems via layout rounding, Display/Ideal formatting modes, and ClearType screen alignment.
 * **Minimalist iOS 3D Sliding Switch**: Interactive horizontal sliding switch styled precisely after Apple iOS design, eliminating distracting ON/OFF text and handle center dots to deliver a pure, clean metallic aesthetic driven by luxury easing animations (`CubicEase`).
