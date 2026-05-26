@@ -17,12 +17,10 @@
                         BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="订阅管理" FontSize="14" FontWeight="SemiBold" 
-                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,4" />
-                        <TextBlock Text="已为您绑定专属加速云通道" FontSize="11"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,12" />
+                                   Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,0,0,12" />
                         
                         <!-- Fixed subscription address preview -->
-                        <Grid Margin="0,0,0,12">
+                        <Grid Margin="0,0,0,16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
@@ -34,8 +32,19 @@
                                         Background="{DynamicResource ControlAltFillColorTertiaryBrush}" />
                         </Grid>
 
-                        <ui:Button x:Name="BtnPull" Content="同步云端配置" Appearance="Primary"
-                                   Click="BtnPull_Click" Width="140" HorizontalAlignment="Left" />
+                        <!-- Action Row: Last Sync Time on Left, Pull Button on Right -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="上次同步：" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock x:Name="TxtLastSyncTime" Text="从未同步" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </StackPanel>
+                            <ui:Button x:Name="BtnPull" Grid.Column="1" Content="同步云端配置" Appearance="Primary"
+                                       Click="BtnPull_Click" Width="140" HorizontalAlignment="Right" />
+                        </Grid>
                     </StackPanel>
                 </Border>
 

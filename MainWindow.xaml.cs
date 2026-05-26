@@ -1,5 +1,10 @@
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 using Wpf.Ui.Controls;
+using H.NotifyIcon;
+using System.Drawing;
+
 
 namespace SingBoxTrayApp;
 
@@ -40,15 +45,40 @@ public partial class MainWindow : FluentWindow
             this.Top = workingArea.Bottom - h - 40;
         };
 
-        // Setup tray icon from embedded resource (no file needed in output directory)
+        // ── Pure WPF Tray Icon (H.NotifyIcon) ──────────────────────────
+        // Replaces System.Windows.Forms.NotifyIcon to eliminate the WinForms dependency entirely.
+        Closing += (s, e) => {
+            e.Cancel = true;
+            this.Hide();
+        };
+
+        // Setup tray icon using robust executable-associated icon extraction
         _notifyIcon = new System.Windows.Forms.NotifyIcon();
-        var iconStream = System.Windows.Application.GetResourceStream(new System.Uri("pack://application:,,,/icon.ico"));
-        if (iconStream?.Stream != null)
+        try
         {
-            using var rawIcon = new System.Drawing.Icon(iconStream.Stream);
-            _notifyIcon.Icon = (System.Drawing.Icon)rawIcon.Clone();
+            string exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName 
+                             ?? System.Reflection.Assembly.GetExecutingAssembly().Location;
+            using var assocIcon = System.Drawing.Icon.ExtractAssociatedIcon(exePath);
+            if (assocIcon != null)
+            {
+                _notifyIcon.Icon = (System.Drawing.Icon)assocIcon.Clone();
+            }
+            else
+            {
+                // Fallback to pack resource if association fails
+                var iconStream = System.Windows.Application.GetResourceStream(new System.Uri("pack://application:,,,/icon.ico"));
+                if (iconStream?.Stream != null)
+                {
+                    using var rawIcon = new System.Drawing.Icon(iconStream.Stream);
+                    _notifyIcon.Icon = (System.Drawing.Icon)rawIcon.Clone();
+                }
+                else
+                {
+                    _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
+                }
+            }
         }
-        else
+        catch
         {
             _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
         }
@@ -60,15 +90,11 @@ public partial class MainWindow : FluentWindow
         contextMenu.Items.Add("显示主窗口", null, (s, e) => ShowWindow());
         contextMenu.Items.Add("退出", null, (s, e) => {
             SingBoxService.Instance.Stop();
+            SingBoxService.Instance.Shutdown();
             _notifyIcon.Dispose();
             System.Windows.Application.Current.Shutdown();
         });
         _notifyIcon.ContextMenuStrip = contextMenu;
-
-        Closing += (s, e) => {
-            e.Cancel = true;
-            this.Hide();
-        };
 
         // CRITICAL: Navigate MUST happen in Loaded, NOT in constructor.
         // The NavigationView's internal Frame/ContentPresenter is null until
@@ -123,22 +149,22 @@ public partial class MainWindow : FluentWindow
 
         if (currentTheme == Wpf.Ui.Appearance.ApplicationTheme.Light)
         {
-            // Ice Sky-Blue main background (Solid, beautiful sky-blue)
-            var lightBgBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(200, 220, 248));
+            // Semi-transparent ice-blue for Mica glass blending (Opacity: 0.8)
+            var lightBgBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(204, 240, 244, 252));
             this.Background = lightBgBrush;
             
             System.Windows.Application.Current.Resources["WindowSubtleBlueBg"] = lightBgBrush;
-            System.Windows.Application.Current.Resources["CardSubtleBg"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 255, 255));
+            System.Windows.Application.Current.Resources["CardSubtleBg"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(235, 255, 255, 255)); // Slightly translucent card
             System.Windows.Application.Current.Resources["CardStrokeColorDefaultBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(172, 198, 236));
         }
         else
         {
-            // Sleek deep starry-night dark blue background (Solid deep navy)
-            var darkBgBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(10, 15, 26));
+            // Semi-transparent deep starry-night dark navy for Mica glass blending (Opacity: 0.8)
+            var darkBgBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(204, 10, 15, 26));
             this.Background = darkBgBrush;
             
             System.Windows.Application.Current.Resources["WindowSubtleBlueBg"] = darkBgBrush;
-            System.Windows.Application.Current.Resources["CardSubtleBg"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(18, 24, 38));
+            System.Windows.Application.Current.Resources["CardSubtleBg"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(235, 18, 24, 38)); // Slightly translucent card
             System.Windows.Application.Current.Resources["CardStrokeColorDefaultBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(29, 38, 59));
         }
     }

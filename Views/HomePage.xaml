@@ -5,65 +5,132 @@
       Background="Transparent">
 
     <Page.Resources>
-        <!-- Reusable iOS / Apple Style sliding ToggleButton template (2x size: 144x76 with premium depth) -->
-        <Style x:Key="AppleSwitchStyle" TargetType="ToggleButton">
-            <Setter Property="Width" Value="144" />
-            <Setter Property="Height" Value="76" />
+        <!-- Premium 3D Layered iOS-Style Sliding Switch Style (Width/Height: 112x56) -->
+        <Style x:Key="iOS3DSwitchStyle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="112" />
+            <Setter Property="Height" Value="56" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
-                        <Grid>
-                            <!-- Ambient Glow/Shadow of the switch -->
-                            <Border x:Name="GlowTrack" CornerRadius="38">
+                        <Grid x:Name="SwitchRoot">
+                            <!-- LAYER 1: Ambient Track Glow/Shadow -->
+                            <Border x:Name="GlowTrack" CornerRadius="28">
                                 <Border.Effect>
-                                    <DropShadowEffect x:Name="TrackShadow" BlurRadius="12" Color="#4A6A9E" ShadowDepth="1" Opacity="0.12" />
+                                    <DropShadowEffect x:Name="TrackShadow" BlurRadius="12" Color="#4A6A9E" ShadowDepth="1" Opacity="0.08" />
                                 </Border.Effect>
                             </Border>
 
-                            <!-- Background Track (with luxurious gradient) -->
-                            <Border x:Name="Track" CornerRadius="38" BorderThickness="1.5">
+                            <!-- LAYER 2: Indented Track (Pill groove with inner shading) -->
+                            <Border x:Name="Track" CornerRadius="28" BorderThickness="1.5">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                        <GradientStop Color="#2C2C2E" Offset="0.0" />
-                                        <GradientStop Color="#3A3A3C" Offset="1.0" />
+                                        <GradientStop Color="#1E2024" Offset="0.0" />
+                                        <GradientStop Color="#2A2E38" Offset="1.0" />
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <Border.BorderBrush>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                        <GradientStop Color="#48484A" Offset="0.0" />
-                                        <GradientStop Color="#2C2C2E" Offset="1.0" />
+                                        <GradientStop Color="#121316" Offset="0.0" />
+                                        <GradientStop Color="#3A3E4A" Offset="1.0" />
                                     </LinearGradientBrush>
                                 </Border.BorderBrush>
+                                
+                                <Grid>
+                                    <!-- Inner recessed shade to give depth to the track -->
+                                    <Border CornerRadius="26" BorderThickness="1" Opacity="0.4">
+                                        <Border.BorderBrush>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#000000" Offset="0.0" />
+                                                <GradientStop Color="#FFFFFF" Offset="1.0" />
+                                            </LinearGradientBrush>
+                                        </Border.BorderBrush>
+                                    </Border>
+                                    
+                                    <!-- Clean switch track without text to match pure iOS design -->
+                                </Grid>
                             </Border>
-                            
-                            <!-- Sliding White Thumb (with gorgeous 3D gradient and inner border) -->
-                            <Border x:Name="Thumb" Width="68" Height="68" CornerRadius="34" HorizontalAlignment="Left" Margin="4,0,0,0"
-                                    BorderBrush="#E5E5EA" BorderThickness="0.5">
+
+                            <!-- LAYER 3: The 3D Floating Sliding Thumb (Slider handle) -->
+                            <Border x:Name="Thumb" Width="48" Height="48" CornerRadius="24" HorizontalAlignment="Left" Margin="4,0,0,0"
+                                    BorderBrush="#E5E5EA" BorderThickness="0.8">
                                 <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                         <GradientStop Color="#FFFFFF" Offset="0.0" />
-                                        <GradientStop Color="#F2F4F7" Offset="1.0" />
+                                        <GradientStop Color="#F4F6F9" Offset="0.4" />
+                                        <GradientStop Color="#E1E5EC" Offset="1.0" />
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <Border.Effect>
-                                    <DropShadowEffect BlurRadius="8" Color="#000000" ShadowDepth="3" Opacity="0.28" />
+                                    <DropShadowEffect x:Name="ThumbShadow" BlurRadius="8" Color="#000000" ShadowDepth="3" Opacity="0.32" />
                                 </Border.Effect>
                                 <Border.RenderTransform>
                                     <TranslateTransform x:Name="ThumbTranslate" X="0" />
                                 </Border.RenderTransform>
+                                
+                                <!-- Sleek concentric rings inside the thumb for high-end mechanical feel -->
+                                <Grid>
+                                    <Ellipse Width="44" Height="44" StrokeThickness="0.6">
+                                        <Ellipse.Stroke>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#80FFFFFF" Offset="0.0" />
+                                                <GradientStop Color="#00FFFFFF" Offset="0.5" />
+                                            </LinearGradientBrush>
+                                        </Ellipse.Stroke>
+                                    </Ellipse>
+                                    <!-- Clean solid white sliding handle surface -->
+                                </Grid>
                             </Border>
                         </Grid>
                         
                         <ControlTemplate.Triggers>
-                            <!-- Checked state: Apple Neon Green Glow and thumb slide -->
+                            <!-- Hover state: Thumb slightly enlarges and shadow intensifies -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ThumbShadow" Storyboard.TargetProperty="Opacity" To="0.45" Duration="0:0:0.15" />
+                                            <DoubleAnimation Storyboard.TargetName="ThumbShadow" Storyboard.TargetProperty="BlurRadius" To="11" Duration="0:0:0.15" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ThumbShadow" Storyboard.TargetProperty="Opacity" To="0.32" Duration="0:0:0.15" />
+                                            <DoubleAnimation Storyboard.TargetName="ThumbShadow" Storyboard.TargetProperty="BlurRadius" To="8" Duration="0:0:0.15" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+
+                            <!-- Pressed state: Thumb depresses slightly -->
+                            <Trigger Property="IsPressed" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ThumbShadow" Storyboard.TargetProperty="ShadowDepth" To="1" Duration="0:0:0.05" />
+                                            <DoubleAnimation Storyboard.TargetName="ThumbShadow" Storyboard.TargetProperty="BlurRadius" To="4" Duration="0:0:0.05" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ThumbShadow" Storyboard.TargetProperty="ShadowDepth" To="3" Duration="0:0:0.05" />
+                                            <DoubleAnimation Storyboard.TargetName="ThumbShadow" Storyboard.TargetProperty="BlurRadius" To="8" Duration="0:0:0.05" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+
+                            <!-- Checked (ON) State: Slide right and change background to rich iOS green -->
                             <Trigger Property="IsChecked" Value="True">
-                                <!-- Change Track Background to premium iOS Green gradient -->
                                 <Setter TargetName="Track" Property="Background">
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                             <GradientStop Color="#34D15E" Offset="0.0" />
-                                            <GradientStop Color="#28B850" Offset="1.0" />
+                                            <GradientStop Color="#24B54C" Offset="1.0" />
                                         </LinearGradientBrush>
                                     </Setter.Value>
                                 </Setter>
@@ -71,26 +138,47 @@
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                                             <GradientStop Color="#4CE677" Offset="0.0" />
-                                            <GradientStop Color="#24A346" Offset="1.0" />
+                                            <GradientStop Color="#1E9B3E" Offset="1.0" />
                                         </LinearGradientBrush>
                                     </Setter.Value>
                                 </Setter>
                                 
+                                
+                                
+                                
                                 <Trigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard>
+                                            <!-- Smooth sliding animation with premium CubicEase out physics -->
                                             <DoubleAnimation Storyboard.TargetName="ThumbTranslate" 
                                                              Storyboard.TargetProperty="X" 
-                                                             To="68" Duration="0:0:0.2" />
+                                                             To="56" Duration="0:0:0.25">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            
+                                            <!-- Soft green ambient glow on track -->
+                                            <DoubleAnimation Storyboard.TargetName="TrackShadow" Storyboard.TargetProperty="Opacity" To="0.22" Duration="0:0:0.2" />
+                                            <ColorAnimation Storyboard.TargetName="TrackShadow" Storyboard.TargetProperty="Color" To="#34D15E" Duration="0:0:0.2" />
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.EnterActions>
                                 <Trigger.ExitActions>
                                     <BeginStoryboard>
                                         <Storyboard>
+                                            <!-- Slide back to left -->
                                             <DoubleAnimation Storyboard.TargetName="ThumbTranslate" 
                                                              Storyboard.TargetProperty="X" 
-                                                             To="0" Duration="0:0:0.2" />
+                                                             To="0" Duration="0:0:0.25">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            
+                                            <!-- Restore track shadow -->
+                                            <DoubleAnimation Storyboard.TargetName="TrackShadow" Storyboard.TargetProperty="Opacity" To="0.08" Duration="0:0:0.2" />
+                                            <ColorAnimation Storyboard.TargetName="TrackShadow" Storyboard.TargetProperty="Color" To="#4A6A9E" Duration="0:0:0.2" />
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </Trigger.ExitActions>
@@ -100,11 +188,72 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- High-End Dashboard Metric Card Style with 3D Hover elevation -->
+        <Style x:Key="DashboardCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource CardSubtleBg}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <TranslateTransform X="0" Y="0" />
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect x:Name="CardShadow" BlurRadius="8" Color="#4A6A9E" ShadowDepth="1" Opacity="0.06" />
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Trigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <!-- Smoothly translate upward by 4px -->
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                                 To="-4" Duration="0:0:0.2">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <!-- Increase shadow intensity -->
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)"
+                                                 To="0.18" Duration="0:0:0.2" />
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.BlurRadius)"
+                                                 To="14" Duration="0:0:0.2" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
+                    <Trigger.ExitActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <!-- Smoothly restore original position -->
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                                 To="0" Duration="0:0:0.2">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <!-- Restore shadow -->
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)"
+                                                 To="0.06" Duration="0:0:0.2" />
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.BlurRadius)"
+                                                 To="8" Duration="0:0:0.2" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.ExitActions>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Page.Resources>
 
     <ScrollViewer Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource AncestorType={x:Type Frame}}, FallbackValue=600}" VerticalScrollBarVisibility="Auto" Padding="16,12,16,16" PreviewMouseWheel="ScrollViewer_PreviewMouseWheel">
         <StackPanel Margin="8,0">
-            <!-- Apple-Style Dynamic Status & Switch Panel -->
+            <!-- Premium Dynamic Status & 3D Connection Panel -->
             <Border Background="{DynamicResource CardSubtleBg}"
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1" CornerRadius="8" Padding="20" Margin="0,0,0,16">
@@ -112,25 +261,20 @@
                     <DropShadowEffect BlurRadius="12" Color="#4A6A9E" ShadowDepth="1" Opacity="0.08" />
                 </Border.Effect>
                 <StackPanel HorizontalAlignment="Center">
-                    <!-- Status Title (Changed from "系统未连接" to "未连接") -->
+                    <!-- Status Title -->
                     <TextBlock x:Name="TxtStatusTitle" Text="未连接" FontSize="20" FontWeight="Bold" 
                                HorizontalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Margin="0,8,0,16" />
                     
-                    <!-- Large Apple Toggle Switch Control (Double size) -->
-                    <ToggleButton x:Name="BtnAppleToggle" Style="{StaticResource AppleSwitchStyle}"
-                                  Click="BtnAppleToggle_Click" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                    <!-- Futuristic 3D iOS-Style Connection Switch -->
+                    <ToggleButton x:Name="BtnAppleToggle" Style="{StaticResource iOS3DSwitchStyle}"
+                                  Click="BtnAppleToggle_Click" HorizontalAlignment="Center" Margin="0,4,0,12" />
                 </StackPanel>
             </Border>
 
             <!-- Performance / Core Metrics Grid (2 Columns) -->
             <UniformGrid Columns="2" Margin="0,0,0,16">
                 <!-- Latency Metric -->
-                <Border Background="{DynamicResource CardSubtleBg}"
-                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="8" Padding="12" Margin="4">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="8" Color="#4A6A9E" ShadowDepth="0.5" Opacity="0.05" />
-                    </Border.Effect>
+                <Border Style="{StaticResource DashboardCardStyle}">
                     <StackPanel>
                         <TextBlock Text="连接延迟" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock x:Name="TxtLatency" Text="-- ms" FontSize="18" FontWeight="Bold" Margin="0,4,0,0"
@@ -139,12 +283,7 @@
                 </Border>
 
                 <!-- Core Memory Metric -->
-                <Border Background="{DynamicResource CardSubtleBg}"
-                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="8" Padding="12" Margin="4">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="8" Color="#4A6A9E" ShadowDepth="0.5" Opacity="0.05" />
-                    </Border.Effect>
+                <Border Style="{StaticResource DashboardCardStyle}">
                     <StackPanel>
                         <TextBlock Text="内核内存占用" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock x:Name="TxtMemory" Text="0.0 MB" FontSize="18" FontWeight="Bold" Margin="0,4,0,0"
@@ -153,12 +292,7 @@
                 </Border>
 
                 <!-- Active Node Metric -->
-                <Border Background="{DynamicResource CardSubtleBg}"
-                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="8" Padding="12" Margin="4">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="8" Color="#4A6A9E" ShadowDepth="0.5" Opacity="0.05" />
-                    </Border.Effect>
+                <Border Style="{StaticResource DashboardCardStyle}">
                     <StackPanel>
                         <TextBlock Text="当前节点" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock x:Name="TxtActiveNode" Text="未连接" FontSize="14" FontWeight="SemiBold" 
@@ -168,12 +302,7 @@
                 </Border>
 
                 <!-- Node Count Metric -->
-                <Border Background="{DynamicResource CardSubtleBg}"
-                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1" CornerRadius="8" Padding="12" Margin="4">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="8" Color="#4A6A9E" ShadowDepth="0.5" Opacity="0.05" />
-                    </Border.Effect>
+                <Border Style="{StaticResource DashboardCardStyle}">
                     <StackPanel>
                         <TextBlock Text="已装载节点" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock x:Name="TxtNodeCount" Text="0 个" FontSize="18" FontWeight="Bold" Margin="0,4,0,0"

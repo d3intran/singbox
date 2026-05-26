@@ -8,6 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Optimized publish settings for standalone distribution -->
@@ -15,10 +16,14 @@
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <IncludeNativeLibrariesForSelfContained>true</IncludeNativeLibrariesForSelfContained>
+    <!-- WPF is incompatible with IL trimming: the linker strips COM interop stubs
+         (System.StubHelpers.InterfaceMarshaler) required by pack:// URI resolution,
+         causing XamlParseException at startup. Keep trimming disabled. -->
     <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="H.NotifyIcon.Wpf" Version="2.4.1" NoWarn="NU1701" />
     <PackageReference Include="WPF-UI" Version="3.0.4" />
   </ItemGroup>
 
@@ -27,16 +32,25 @@
     <Resource Include="icon.png" />
   </ItemGroup>
 
-  <!-- Automatically copy published files to the core distribution folder -->
-  <Target Name="AutoCopyToDistribution" AfterTargets="Publish">
-    <Message Importance="High" Text="[AutoCopy] Copying published single-file app and dependencies to sing-box-1.13.12-windows-amd64..." />
+  <!-- Automatically clean and copy compiled files to the core distribution folder on every build -->
+  <Target Name="AutoCopyToDistribution" AfterTargets="Build">
+    <Message Importance="High" Text="[AutoCopy] Cleaning old build output files in sing-box-1.13.12-windows-amd64 (preserving core engine, config and licenses)..." />
     <ItemGroup>
-      <PublishOutputFiles Include="$(PublishDir)**\*.*" />
+      <OldFilesToClean Include="$(MSBuildProjectDirectory)\sing-box-1.13.12-windows-amd64\**\*.*" 
+                       Exclude="$(MSBuildProjectDirectory)\sing-box-1.13.12-windows-amd64\sing-box.exe;
+                                $(MSBuildProjectDirectory)\sing-box-1.13.12-windows-amd64\libcronet.dll;
+                                $(MSBuildProjectDirectory)\sing-box-1.13.12-windows-amd64\LICENSE;
+                                $(MSBuildProjectDirectory)\sing-box-1.13.12-windows-amd64\config.json;
+                                $(MSBuildProjectDirectory)\sing-box-1.13.12-windows-amd64\sync_time.txt" />
     </ItemGroup>
-    <Copy SourceFiles="@(PublishOutputFiles)" 
-          DestinationFolder="$(MSBuildProjectDirectory)\sing-box-1.13.12-windows-amd64\" 
-          OverwriteReadOnlyFiles="true" 
-          SkipUnchangedFiles="false" />
+    <!-- ContinueOnError="true" ensures that if files are locked by a running instance, the build doesn't crash completely -->
+    <Delete Files="@(OldFilesToClean)" ContinueOnError="true" />
+    
+    <Message Importance="High" Text="[AutoCopy] Copying fresh build outputs to sing-box-1.13.12-windows-amd64..." />
+    <ItemGroup>
+      <BuildOutputFiles Include="$(TargetDir)**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BuildOutputFiles)" DestinationFolder="$(MSBuildProjectDirectory)\sing-box-1.13.12-windows-amd64\" OverwriteReadOnlyFiles="true" SkipUnchangedFiles="false" />
     <Message Importance="High" Text="[AutoCopy] Copy completed successfully!" />
   </Target>
 

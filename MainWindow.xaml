@@ -6,21 +6,22 @@
         xmlns:views="clr-namespace:SingBoxTrayApp.Views"
         Title="sinbox" Height="680" Width="430"
         Icon="pack://application:,,,/icon.png"
-        WindowBackdropType="None"
+        WindowBackdropType="Mica"
         WindowCornerPreference="Round"
         WindowStartupLocation="Manual"
         ExtendsContentIntoTitleBar="True"
         Background="{DynamicResource WindowSubtleBlueBg}"
         UseLayoutRounding="True"
-        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="ClearType"
+        RenderOptions.ClearTypeHint="Enabled"
         FontFamily="Microsoft YaHei, Segoe UI, Arial">
 
     <DockPanel>
         <!-- Modern custom title bar with seamless integration and top-left icon (CanMaximize=False hides Maximize button) -->
         <ui:TitleBar x:Name="AppTitleBar" DockPanel.Dock="Top" Title="sinbox" Height="32" Padding="8,0" FontSize="12" CanMaximize="False">
             <ui:TitleBar.Icon>
-                <ui:ImageIcon Source="pack://application:,,,/icon.png" Width="18" Height="18" VerticalAlignment="Center" Margin="6,0,4,0" />
+                <ui:ImageIcon Source="pack://application:,,,/icon.png" Width="16" Height="16" VerticalAlignment="Center" Margin="6,0,4,0" />
             </ui:TitleBar.Icon>
         </ui:TitleBar>
         

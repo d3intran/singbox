@@ -5,6 +5,9 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using System.Windows.Media;
 using Wpf.Ui.Controls;
+using Brush = System.Windows.Media.Brush;
+using Color = System.Windows.Media.Color;
+using Brushes = System.Windows.Media.Brushes;
 
 namespace SingBoxTrayApp.Views;
 
@@ -51,7 +54,7 @@ public partial class HomePage : Page
         {
             // Connected state
             TxtStatusTitle.Text = "已连接";
-            TxtStatusTitle.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(48, 209, 88)); // Apple iOS Green
+            TxtStatusTitle.Foreground = ProxyNodeViewModel.GreenForeground; // reuse cached brush
         }
         else
         {
@@ -106,13 +109,30 @@ public partial class HomePage : Page
         UpdateStats();
     }
 
+    // Track previous state to avoid unnecessary full rebuilds
+    private int _lastNodeCount = -1;
+    private string _lastActiveNode = "";
+    private string _lastFilter = "";
+
     private void RefreshNodes()
     {
         var activeNodeName = SingBoxService.Instance.ActiveNodeName;
         var filter = TxtSearch.Text.Trim();
+        var nodes = SingBoxService.Instance.ProxyNodes;
 
-        var viewModels = new List<ProxyNodeViewModel>();
-        foreach (var node in SingBoxService.Instance.ProxyNodes)
+        // Skip rebuild if nothing changed (same nodes, same active, same filter)
+        if (nodes.Count == _lastNodeCount && activeNodeName == _lastActiveNode && filter == _lastFilter
+            && NodesList.ItemsSource != null)
+        {
+            return;
+        }
+
+        _lastNodeCount = nodes.Count;
+        _lastActiveNode = activeNodeName;
+        _lastFilter = filter;
+
+        var viewModels = new List<ProxyNodeViewModel>(nodes.Count);
+        foreach (var node in nodes)
         {
             if (!string.IsNullOrEmpty(filter) && !node.Name.Contains(filter, StringComparison.OrdinalIgnoreCase))
                 continue;
@@ -121,7 +141,6 @@ public partial class HomePage : Page
             viewModels.Add(new ProxyNodeViewModel(node, isActive));
         }
 
-        NodesList.ItemsSource = null;
         NodesList.ItemsSource = viewModels;
     }
 
@@ -129,6 +148,8 @@ public partial class HomePage : Page
     {
         BtnTest.IsEnabled = false;
         BtnTest.Content = "测速中...";
+        // Force refresh after test since delays change
+        _lastNodeCount = -1;
         await SingBoxService.Instance.RunLatencyTestsAsync();
         BtnTest.Content = "一键测速";
         BtnTest.IsEnabled = true;
@@ -137,6 +158,7 @@ public partial class HomePage : Page
 
     private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
     {
+        _lastFilter = ""; // invalidate cache to force rebuild
         RefreshNodes();
     }
 
@@ -144,6 +166,7 @@ public partial class HomePage : Page
     {
         if (sender is Border border && border.DataContext is ProxyNodeViewModel vm)
         {
+            _lastActiveNode = ""; // invalidate cache
             await SingBoxService.Instance.SwitchNodeAsync(vm.RawNode.Name);
             RefreshNodes();
         }
@@ -160,10 +183,33 @@ public partial class HomePage : Page
 }
 
 /// <summary>
-/// Premium ViewModel with Apple-Green and Amber-Yellow latency thresholds
+/// Premium ViewModel with static frozen Brush instances to eliminate per-access GC allocations.
+/// All Brush objects are created once, frozen (made immutable), and reused across all instances.
 /// </summary>
 public class ProxyNodeViewModel
 {
+    // ── Static Frozen Brush Cache ──────────────────────────────────────
+    // Frozen brushes are thread-safe and avoid repeated allocations.
+    // Each brush is created once at class load and shared by ALL ViewModel instances.
+
+    // Pill backgrounds
+    private static readonly SolidColorBrush s_pillBgDefault = Freeze(new SolidColorBrush(Color.FromArgb(20, 120, 120, 125)));
+    private static readonly SolidColorBrush s_pillBgGreen   = Freeze(new SolidColorBrush(Color.FromArgb(25, 48, 209, 88)));
+    private static readonly SolidColorBrush s_pillBgAmber   = Freeze(new SolidColorBrush(Color.FromArgb(25, 255, 185, 0)));
+    private static readonly SolidColorBrush s_pillBgRed     = Freeze(new SolidColorBrush(Color.FromArgb(25, 255, 59, 48)));
+
+    // Pill foregrounds
+    private static readonly SolidColorBrush s_pillFgDefault = Freeze(new SolidColorBrush(Color.FromRgb(140, 140, 145)));
+    private static readonly SolidColorBrush s_pillFgGreen   = Freeze(new SolidColorBrush(Color.FromRgb(48, 209, 88)));
+    private static readonly SolidColorBrush s_pillFgAmber   = Freeze(new SolidColorBrush(Color.FromRgb(255, 185, 0)));
+    private static readonly SolidColorBrush s_pillFgRed     = Freeze(new SolidColorBrush(Color.FromRgb(255, 59, 48)));
+
+    // Status title color (reused by HomePage)
+    public static readonly SolidColorBrush GreenForeground = Freeze(new SolidColorBrush(Color.FromRgb(48, 209, 88)));
+
+    private static SolidColorBrush Freeze(SolidColorBrush brush) { brush.Freeze(); return brush; }
+
+    // ── Instance Members ───────────────────────────────────────────────
     private readonly ProxyNode _node;
     private readonly bool _isActive;
 
@@ -186,34 +232,36 @@ public class ProxyNodeViewModel
         }
     }
 
-    public System.Windows.Media.Brush PillBackground
+    public Brush PillBackground
     {
         get
         {
-            if (Delay <= 0) return new SolidColorBrush(System.Windows.Media.Color.FromArgb(20, 120, 120, 125));
-            if (Delay < 300) return new SolidColorBrush(System.Windows.Media.Color.FromArgb(25, 48, 209, 88)); // Apple iOS Green (<300ms)
-            return new SolidColorBrush(System.Windows.Media.Color.FromArgb(25, 255, 185, 0));  // iOS Amber/Yellow (>=300ms)
+            if (Delay <= 0) return s_pillBgDefault;
+            if (Delay < 300) return s_pillBgGreen;
+            if (Delay < 800) return s_pillBgAmber;
+            return s_pillBgRed;   // ≥800ms = red timeout territory
         }
     }
 
-    public System.Windows.Media.Brush PillForeground
+    public Brush PillForeground
     {
         get
         {
-            if (Delay <= 0) return new SolidColorBrush(System.Windows.Media.Color.FromRgb(140, 140, 145));
-            if (Delay < 300) return new SolidColorBrush(System.Windows.Media.Color.FromRgb(48, 209, 88)); // Apple iOS Green (<300ms)
-            return new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 185, 0));  // iOS Amber/Yellow (>=300ms)
+            if (Delay <= 0) return s_pillFgDefault;
+            if (Delay < 300) return s_pillFgGreen;
+            if (Delay < 800) return s_pillFgAmber;
+            return s_pillFgRed;
         }
     }
 
-    public System.Windows.Media.Brush CardBorderBrush
+    public Brush CardBorderBrush
     {
         get
         {
             if (_isActive) 
-                return System.Windows.Application.Current.Resources["SystemAccentColorBrush"] as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.DodgerBlue;
+                return System.Windows.Application.Current.Resources["SystemAccentColorBrush"] as Brush ?? Brushes.DodgerBlue;
             
-            return System.Windows.Application.Current.Resources["CardStrokeColorDefaultBrush"] as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.Gray;
+            return System.Windows.Application.Current.Resources["CardStrokeColorDefaultBrush"] as Brush ?? Brushes.Gray;
         }
     }
 

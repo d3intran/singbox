@@ -21,9 +21,10 @@ graph TD
 
 ### 1. Presentation Layer (WPF & WPF-UI)
 * **Custom TitleBar**: Integrated native Win32 non-client area drag-and-drop support with custom vector brand styling (`sinbox`) and standard clickable controls.
-* **Layout Sizing**: A modern 30% scaled compact left NavigationView sidebar (`CompactPaneLength="83"`, item `Height="52"`) housing type-safe, multi-colored gradient vector icons (`ui:ImageIcon` holding vector `DrawingImage` paths).
-* **Text Formatting**: Sharp, pixel-perfect text rendering optimized for modern high-DPI Windows systems via layout rounding and ClearType screen alignment (`UseLayoutRounding="True"`, `TextOptions.TextFormattingMode="Display"`, `TextOptions.TextRenderingMode="ClearType"`).
-* **Apple-Style Slide Switch**: Interactive 2x-scaled sliding ToggleButton customized with standard WPF control templates and double-storyboard animations.
+* **Layout Sizing & Unclipped Branding**: A modern compact left NavigationView sidebar (`CompactPaneLength="83"`) housing type-safe, unclipped `16x16` logo icons (`ui:ImageIcon`) centered perfectly to prevent DWM fractional boundary clipping.
+* **Text Formatting & Sharp Rendering**: Paper-sharp, pixel-perfect text rendering optimized for modern high-DPI Windows systems via layout rounding, Display/Ideal formatting modes, and ClearType screen alignment.
+* **Minimalist iOS 3D Sliding Switch**: Interactive horizontal sliding switch styled precisely after Apple iOS design, eliminating distracting ON/OFF text and handle center dots to deliver a pure, clean metallic aesthetic driven by luxury easing animations (`CubicEase`).
+* **Robust Win32 Tray Integration**: Replaced standard pack-URI stream loading with direct PE metadata executable-associated icon extraction (`System.Drawing.Icon.ExtractAssociatedIcon(exePath)`) wrapped in a multi-tier try-catch recovery loop to guarantee 100% startup stability.
 
 ### 2. Service & Process Management Layer (`SingBoxService.cs`)
 * **Process Lifecycle**: Implements external core process execution, redirecting standard input/output streams to a thread-safe circular log buffer.

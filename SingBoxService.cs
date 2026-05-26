@@ -21,53 +21,97 @@ public class SingBoxService
 {
     public static SingBoxService Instance { get; } = new SingBoxService();
 
-    private Process? singBoxProcess;
+    // volatile ensures visibility across threads; _processLock guards mutations
+    private volatile Process? singBoxProcess;
+    private readonly object _processLock = new();
+
     private readonly HttpClient httpClient;
+    private readonly HttpClient latencyClient; // dedicated client for latency tests
+    private readonly SemaphoreSlim _latencySemaphore = new(8); // limit concurrent latency tests
     private readonly string baseDir;
-    
+    private CancellationTokenSource? _statusCts;
+
     public string ConfigPath { get; }
     public string SingboxExe { get; }
     public string DefaultSubUrl { get; } = "https://sing.2005666.xyz";
 
     public string ActiveNodeName { get; private set; } = "未连接";
     public List<ProxyNode> ProxyNodes { get; private set; } = new();
-    public List<string> LogBuffer { get; } = new();
+    public Queue<string> LogBuffer { get; } = new(); // Queue for O(1) Enqueue/Dequeue
 
     public event Action? StatusChanged;
     public event Action<string>? LogReceived;
+    public DateTime? LastSyncTime { get; private set; }
 
     private SingBoxService()
     {
         baseDir = AppDomain.CurrentDomain.BaseDirectory;
         ConfigPath = Path.Combine(baseDir, "config.json");
         SingboxExe = ResolveSingboxExe(baseDir);
+
         httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
         httpClient.DefaultRequestHeaders.Add("User-Agent", "sing-box");
 
+        // Separate client for latency tests: per-request timeout of 5s
+        // avoids global timeout contention with the main API client
+        latencyClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+        latencyClient.DefaultRequestHeaders.Add("User-Agent", "sing-box");
+
         CheckAndAttachProcess();
         StartStatusTimer();
+
+        // Load last sync time from file if it exists
+        try
+        {
+            string syncTimeFile = Path.Combine(baseDir, "sync_time.txt");
+            if (File.Exists(syncTimeFile))
+            {
+                if (DateTime.TryParse(File.ReadAllText(syncTimeFile), out var lastSync))
+                {
+                    LastSyncTime = lastSync;
+                }
+            }
+        }
+        catch { }
+    }
+
+    /// <summary>
+    /// Asynchronous, non-blocking dispatch to the WPF UI thread.
+    /// Safely handles application shutdown scenarios.
+    /// </summary>
+    private void SafeBeginInvoke(Action action)
+    {
+        var app = System.Windows.Application.Current;
+        if (app != null && !app.Dispatcher.HasShutdownStarted)
+        {
+            app.Dispatcher.BeginInvoke(action);
+        }
     }
 
     private void StartStatusTimer()
     {
+        _statusCts = new CancellationTokenSource();
+        var token = _statusCts.Token;
+
         Task.Run(async () =>
         {
-            while (true)
+            while (!token.IsCancellationRequested)
             {
                 if (singBoxProcess != null) await FetchStatusFromApiAsync();
-                await Task.Delay(5000);
+                try { await Task.Delay(5000, token); }
+                catch (TaskCanceledException) { break; }
             }
-        });
+        }, token);
     }
 
     private void AppendLog(string message)
     {
         lock (LogBuffer)
         {
-            LogBuffer.Add(message);
-            if (LogBuffer.Count > 300) LogBuffer.RemoveAt(0);
+            LogBuffer.Enqueue(message);
+            if (LogBuffer.Count > 300) LogBuffer.Dequeue(); // O(1) FIFO
         }
-        System.Windows.Application.Current.Dispatcher.Invoke(() => LogReceived?.Invoke(message));
+        SafeBeginInvoke(() => LogReceived?.Invoke(message));
     }
 
     private static string ResolveSingboxExe(string baseDir)
@@ -93,11 +137,14 @@ public class SingBoxService
                 {
                     ActiveNodeName = active;
                     ProxyNodes = nodes;
-                    System.Windows.Application.Current.Dispatcher.Invoke(() => StatusChanged?.Invoke());
+                    SafeBeginInvoke(() => StatusChanged?.Invoke());
                 }
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            AppendLog($"[WARN] 状态获取失败: {ex.Message}");
+        }
     }
 
     public bool IsRunning => singBoxProcess != null;
@@ -108,10 +155,11 @@ public class SingBoxService
         {
             try
             {
-                if (singBoxProcess != null && !singBoxProcess.HasExited)
+                var proc = singBoxProcess; // snapshot volatile field
+                if (proc != null && !proc.HasExited)
                 {
-                    singBoxProcess.Refresh();
-                    return singBoxProcess.WorkingSet64 / (1024.0 * 1024.0);
+                    proc.Refresh();
+                    return proc.WorkingSet64 / (1024.0 * 1024.0);
                 }
                 var processes = Process.GetProcessesByName("sing-box");
                 if (processes.Length > 0)
@@ -119,7 +167,10 @@ public class SingBoxService
                     return processes[0].WorkingSet64 / (1024.0 * 1024.0);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                AppendLog($"[WARN] 内存读取失败: {ex.Message}");
+            }
             return 0;
         }
     }
@@ -154,26 +205,35 @@ public class SingBoxService
                 RedirectStandardError = true
             };
 
-            singBoxProcess = new Process { StartInfo = startInfo };
-            singBoxProcess.EnableRaisingEvents = true;
+            var process = new Process { StartInfo = startInfo };
+            process.EnableRaisingEvents = true;
             
-            singBoxProcess.OutputDataReceived += (s, ev) => { 
+            process.OutputDataReceived += (s, ev) => { 
                 if (ev.Data != null) AppendLog($"[INFO] {ev.Data}");
             };
-            singBoxProcess.ErrorDataReceived += (s, ev) => { 
+            process.ErrorDataReceived += (s, ev) => { 
                 if (ev.Data != null) AppendLog($"[ERROR] {ev.Data}");
             };
             
-            singBoxProcess.Exited += (s, ev) => {
-                singBoxProcess = null;
-                System.Windows.Application.Current.Dispatcher.Invoke(() => StatusChanged?.Invoke());
+            process.Exited += (s, ev) =>
+            {
+                lock (_processLock)
+                {
+                    singBoxProcess = null;
+                }
+                SafeBeginInvoke(() => StatusChanged?.Invoke());
             };
 
-            singBoxProcess.Start();
-            singBoxProcess.BeginOutputReadLine();
-            singBoxProcess.BeginErrorReadLine();
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
 
-            System.Windows.Application.Current.Dispatcher.Invoke(() => StatusChanged?.Invoke());
+            lock (_processLock)
+            {
+                singBoxProcess = process;
+            }
+
+            SafeBeginInvoke(() => StatusChanged?.Invoke());
             
             await Task.Delay(2000);
             await FetchStatusFromApiAsync();
@@ -188,10 +248,13 @@ public class SingBoxService
     {
         try
         {
-            if (singBoxProcess != null)
+            lock (_processLock)
             {
-                try { singBoxProcess.Kill(); } catch { }
-                singBoxProcess = null;
+                if (singBoxProcess != null)
+                {
+                    try { singBoxProcess.Kill(); } catch { }
+                    singBoxProcess = null;
+                }
             }
             
             foreach (var p in Process.GetProcessesByName("sing-box"))
@@ -201,9 +264,12 @@ public class SingBoxService
             
             ActiveNodeName = "未连接";
             ProxyNodes.Clear();
-            System.Windows.Application.Current.Dispatcher.Invoke(() => StatusChanged?.Invoke());
+            SafeBeginInvoke(() => StatusChanged?.Invoke());
         }
-        catch { }
+        catch (Exception ex)
+        {
+            AppendLog($"[ERROR] 停止内核时异常: {ex.Message}");
+        }
     }
 
     public async Task UpdateConfigAsync()
@@ -227,6 +293,15 @@ public class SingBoxService
                 configJson = configJson.Replace("cdn.jsdelivr.net", "testingcf.jsdelivr.net");
 
                 File.WriteAllText(ConfigPath, configJson);
+
+                // Save and persist last sync time
+                LastSyncTime = DateTime.Now;
+                try
+                {
+                    File.WriteAllText(Path.Combine(baseDir, "sync_time.txt"), LastSyncTime.Value.ToString("o"));
+                }
+                catch { }
+
                 System.Windows.MessageBox.Show("配置拉取成功！", "成功", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 if (singBoxProcess != null)
                 {
@@ -257,10 +332,13 @@ public class SingBoxService
             if (response.IsSuccessStatusCode)
             {
                 ActiveNodeName = nodeName;
-                System.Windows.Application.Current.Dispatcher.Invoke(() => StatusChanged?.Invoke());
+                SafeBeginInvoke(() => StatusChanged?.Invoke());
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            AppendLog($"[WARN] 切换节点失败: {ex.Message}");
+        }
     }
 
     public async Task RunLatencyTestsAsync()
@@ -273,11 +351,14 @@ public class SingBoxService
             if (node.Name == "auto" || node.Name == "DIRECT" || node.Name == "REJECT") continue;
             
             var currentNode = node;
-            tasks.Add(Task.Run(async () => {
-                string testUrl = $"http://127.0.0.1:9090/proxies/{Uri.EscapeDataString(currentNode.Name)}/delay?timeout=3000&url=http://www.gstatic.com/generate_204";
+            tasks.Add(Task.Run(async () =>
+            {
+                // SemaphoreSlim limits concurrency to prevent request storms
+                await _latencySemaphore.WaitAsync();
                 try
                 {
-                    string res = await httpClient.GetStringAsync(testUrl);
+                    string testUrl = $"http://127.0.0.1:9090/proxies/{Uri.EscapeDataString(currentNode.Name)}/delay?timeout=3000&url=http://www.gstatic.com/generate_204";
+                    string res = await latencyClient.GetStringAsync(testUrl);
                     using var doc = JsonDocument.Parse(res);
                     if (doc.RootElement.TryGetProperty("delay", out var delayEl))
                         currentNode.Delay = delayEl.GetInt32();
@@ -285,11 +366,12 @@ public class SingBoxService
                         currentNode.Delay = -2;
                 }
                 catch { currentNode.Delay = -2; }
+                finally { _latencySemaphore.Release(); }
             }));
         }
 
         await Task.WhenAll(tasks);
-        System.Windows.Application.Current.Dispatcher.Invoke(() => StatusChanged?.Invoke());
+        SafeBeginInvoke(() => StatusChanged?.Invoke());
     }
 
     private void CheckAndAttachProcess()
@@ -297,14 +379,35 @@ public class SingBoxService
         var processes = Process.GetProcessesByName("sing-box");
         if (processes.Length > 0)
         {
-            singBoxProcess = processes[0];
-            singBoxProcess.EnableRaisingEvents = true;
-            singBoxProcess.Exited += (s, e) => {
-                singBoxProcess = null;
-                System.Windows.Application.Current.Dispatcher.Invoke(() => StatusChanged?.Invoke());
+            var proc = processes[0];
+            lock (_processLock)
+            {
+                singBoxProcess = proc;
+            }
+            proc.EnableRaisingEvents = true;
+            proc.Exited += (s, e) =>
+            {
+                lock (_processLock)
+                {
+                    singBoxProcess = null;
+                }
+                SafeBeginInvoke(() => StatusChanged?.Invoke());
             };
             _ = FetchStatusFromApiAsync();
         }
+    }
+
+    /// <summary>
+    /// Clean shutdown: cancel background timers and release resources.
+    /// Must be called before Application.Shutdown().
+    /// </summary>
+    public void Shutdown()
+    {
+        _statusCts?.Cancel();
+        _statusCts?.Dispose();
+        _latencySemaphore.Dispose();
+        httpClient.Dispose();
+        latencyClient.Dispose();
     }
 
     /// <summary>

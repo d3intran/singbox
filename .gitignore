@@ -22,3 +22,5 @@ cache.db
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+*.zip
+*.old
