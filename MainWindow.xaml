@@ -12,7 +12,8 @@
         ExtendsContentIntoTitleBar="True"
         Background="{DynamicResource WindowSubtleBlueBg}"
         UseLayoutRounding="True"
-        TextOptions.TextFormattingMode="Ideal"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
         TextOptions.TextRenderingMode="ClearType"
         RenderOptions.ClearTypeHint="Enabled"
         FontFamily="Microsoft YaHei, Segoe UI, Arial">
