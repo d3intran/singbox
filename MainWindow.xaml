@@ -18,30 +18,153 @@
         RenderOptions.ClearTypeHint="Enabled"
         FontFamily="Microsoft YaHei, Segoe UI, Arial">
 
+    <ui:FluentWindow.Resources>
+        <Style x:Key="LargeTitleBarStyle" TargetType="{x:Type ui:TitleBar}" BasedOn="{StaticResource {x:Type ui:TitleBar}}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ui:TitleBar}">
+                        <Grid x:Name="PART_MainGrid"
+                              HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
+                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                              Background="{TemplateBinding Background}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Grid x:Name="TitleGrid"
+                                  Grid.Column="0"
+                                  Margin="{TemplateBinding Padding}"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <ContentPresenter x:Name="PART_Icon"
+                                                  Grid.Column="0"
+                                                  Width="32"
+                                                  Height="32"
+                                                  Margin="0,0,8,0"
+                                                  VerticalAlignment="Center"
+                                                  AutomationProperties.AutomationId="TitleBarIcon"
+                                                  Content="{TemplateBinding Icon}"
+                                                  Focusable="False"
+                                                  RenderOptions.BitmapScalingMode="HighQuality" />
+                            </Grid>
+
+                            <Grid Grid.Column="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <ContentPresenter Grid.Column="0"
+                                                  HorizontalAlignment="Left"
+                                                  Content="{TemplateBinding Header}" />
+
+                                <Grid Grid.Column="1"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Top">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <ui:TitleBarButton x:Name="PART_HelpButton"
+                                                       Grid.Column="0"
+                                                       AutomationProperties.AutomationId="TitleBarHelpButton"
+                                                       ButtonType="Help" />
+
+                                    <ui:TitleBarButton x:Name="PART_MinimizeButton"
+                                                       Grid.Column="1"
+                                                       AutomationProperties.AutomationId="TitleBarMinimizeButton"
+                                                       ButtonType="Minimize" />
+
+                                    <ui:TitleBarButton x:Name="PART_MaximizeButton"
+                                                       Grid.Column="2"
+                                                       AutomationProperties.AutomationId="TitleBarMaximizeButton"
+                                                       ButtonType="Maximize"
+                                                       IsHitTestVisible="True" />
+
+                                    <ui:TitleBarButton x:Name="PART_CloseButton"
+                                                       Grid.Column="4"
+                                                       AutomationProperties.AutomationId="TitleBarCloseButton"
+                                                       ButtonType="Close"
+                                                       MouseOverBackground="{DynamicResource PaletteRedBrush}"
+                                                       MouseOverButtonsForeground="White" />
+                                </Grid>
+                            </Grid>
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="Icon" Value="{x:Null}" />
+                                    <Condition Property="Title" Value="{x:Null}" />
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="TitleGrid" Property="Visibility" Value="Collapsed" />
+                            </MultiTrigger>
+
+                            <Trigger Property="ApplicationTheme" Value="Dark">
+                                <Setter Property="ButtonsBackground">
+                                    <Setter.Value>
+                                        <SolidColorBrush Color="#17FFFFFF" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+
+                            <Trigger Property="Icon" Value="{x:Null}">
+                                <Setter TargetName="PART_Icon" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="PART_Icon" Property="Margin" Value="0" />
+                            </Trigger>
+
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="ShowMaximize" Value="True" />
+                                    <Condition Property="IsMaximized" Value="True" />
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="PART_MaximizeButton" Property="ButtonType" Value="Restore" />
+                            </MultiTrigger>
+
+                            <Trigger Property="ShowHelp" Value="False">
+                                <Setter TargetName="PART_HelpButton" Property="Visibility" Value="Collapsed" />
+                            </Trigger>
+
+                            <Trigger Property="ShowMinimize" Value="False">
+                                <Setter TargetName="PART_MinimizeButton" Property="Visibility" Value="Collapsed" />
+                            </Trigger>
+
+                            <Trigger Property="ShowMaximize" Value="False">
+                                <Setter TargetName="PART_MaximizeButton" Property="Visibility" Value="Collapsed" />
+                            </Trigger>
+
+                            <Trigger Property="ShowClose" Value="False">
+                                <Setter TargetName="PART_CloseButton" Property="Visibility" Value="Collapsed" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </ui:FluentWindow.Resources>
+
     <DockPanel>
         <!-- Modern custom title bar with seamless integration and top-left icon (CanMaximize=False hides Maximize button) -->
-        <ui:TitleBar x:Name="AppTitleBar" DockPanel.Dock="Top" Height="40" Padding="8,0" CanMaximize="False">
+        <ui:TitleBar x:Name="AppTitleBar" DockPanel.Dock="Top" Height="48" Padding="0,0" CanMaximize="False"
+                 FontSize="18" FontWeight="Normal" Style="{StaticResource LargeTitleBarStyle}">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Width="32" Height="32" Source="pack://application:,,,/icon.png" />
+            </ui:TitleBar.Icon>
             <ui:TitleBar.Header>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" IsHitTestVisible="False">
-                    <Image Source="pack://application:,,,/icon.png" 
-                           Width="32" 
-                           Height="32" 
-                           VerticalAlignment="Center" 
-                           Margin="6,0,0,0"
-                           RenderOptions.BitmapScalingMode="HighQuality"
-                           RenderTransformOrigin="0.5,0.5">
-                        <Image.RenderTransform>
-                            <ScaleTransform ScaleX="0.8" ScaleY="0.8" />
-                        </Image.RenderTransform>
-                    </Image>
-                    <TextBlock Text="singbox" 
-                               VerticalAlignment="Center" 
-                               Margin="8,0,0,0" 
-                               FontSize="18" 
-                               FontWeight="Normal" 
-                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"
-                               FontFamily="Microsoft YaHei, Segoe UI, Arial" />
-                </StackPanel>
+                <TextBlock Text="singbox"
+                           VerticalAlignment="Center"
+                           Margin="0,0,0,0"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                           FontFamily="Microsoft YaHei, Segoe UI, Arial" />
             </ui:TitleBar.Header>
         </ui:TitleBar>
         
