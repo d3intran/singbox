@@ -20,14 +20,29 @@
 
     <DockPanel>
         <!-- Modern custom title bar with seamless integration and top-left icon (CanMaximize=False hides Maximize button) -->
-        <ui:TitleBar x:Name="AppTitleBar" DockPanel.Dock="Top" Title="singbox" Height="40" Padding="8,0" FontSize="18" CanMaximize="False">
-            <ui:TitleBar.Icon>
-                <ui:ImageIcon Source="pack://application:,,,/icon.png" Width="32" Height="32" VerticalAlignment="Center" Margin="6,0,4,0" RenderTransformOrigin="0.5,0.5">
-                    <ui:ImageIcon.RenderTransform>
-                        <ScaleTransform ScaleX="0.8" ScaleY="0.8" />
-                    </ui:ImageIcon.RenderTransform>
-                </ui:ImageIcon>
-            </ui:TitleBar.Icon>
+        <ui:TitleBar x:Name="AppTitleBar" DockPanel.Dock="Top" Height="40" Padding="8,0" CanMaximize="False">
+            <ui:TitleBar.Header>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" IsHitTestVisible="False">
+                    <Image Source="pack://application:,,,/icon.png" 
+                           Width="32" 
+                           Height="32" 
+                           VerticalAlignment="Center" 
+                           Margin="6,0,0,0"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           RenderTransformOrigin="0.5,0.5">
+                        <Image.RenderTransform>
+                            <ScaleTransform ScaleX="0.8" ScaleY="0.8" />
+                        </Image.RenderTransform>
+                    </Image>
+                    <TextBlock Text="singbox" 
+                               VerticalAlignment="Center" 
+                               Margin="8,0,0,0" 
+                               FontSize="18" 
+                               FontWeight="Normal" 
+                               Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                               FontFamily="Microsoft YaHei, Segoe UI, Arial" />
+                </StackPanel>
+            </ui:TitleBar.Header>
         </ui:TitleBar>
         
         <Grid>
